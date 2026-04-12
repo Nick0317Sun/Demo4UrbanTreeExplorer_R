@@ -1,0 +1,24 @@
+{
+  "name": "R_UrbanTreeExplorer",
+  "image": "rocker/ml-spatial",
+  "workspaceFolder": "/workspaces/R_UrbanTreeExplorer",
+  "forwardPorts": [3838],
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "20"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "github.copilot-chat",
+        "posit.air-vscode",
+        "posit.shiny",
+        "quarto.quarto",
+        "reditorsupport.r",
+        "reditorsupport.r-syntax"
+      ]
+    }
+  },
+  "postCreateCommand": "npm install -g @openai/codex && R -q -e \"install.packages(c('shiny','duckdb','arrow','sf','dplyr','readr','stringr','ggplot2','plotly','DT','jsonlite','fs','glue'), repos='https://cloud.r-project.org')\""
+}

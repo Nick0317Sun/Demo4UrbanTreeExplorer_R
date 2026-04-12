@@ -1,0 +1,206 @@
+[
+  {
+    "column_name": "record_id",
+    "storage_type": "string",
+    "required": true,
+    "description": "Deterministic record identifier derived from city file and row order."
+  },
+  {
+    "column_name": "city_key",
+    "storage_type": "string",
+    "required": true,
+    "description": "Lower snake-case city identifier used for partitioning."
+  },
+  {
+    "column_name": "city",
+    "storage_type": "string",
+    "required": true,
+    "description": "Display city name from the source inventory."
+  },
+  {
+    "column_name": "state",
+    "storage_type": "string",
+    "required": true,
+    "description": "Display state name from the source inventory."
+  },
+  {
+    "column_name": "metro_name",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source greater metro field standardized for runtime use."
+  },
+  {
+    "column_name": "source_file",
+    "storage_type": "string",
+    "required": true,
+    "description": "Source CSV filename."
+  },
+  {
+    "column_name": "source_city_id",
+    "storage_type": "string",
+    "required": false,
+    "description": "City-level source identifier preserved as text."
+  },
+  {
+    "column_name": "source_tree_id",
+    "storage_type": "string",
+    "required": false,
+    "description": "Tree-level source identifier preserved as text."
+  },
+  {
+    "column_name": "longitude",
+    "storage_type": "float64",
+    "required": true,
+    "description": "Tree longitude in WGS84 decimal degrees."
+  },
+  {
+    "column_name": "latitude",
+    "storage_type": "float64",
+    "required": true,
+    "description": "Tree latitude in WGS84 decimal degrees."
+  },
+  {
+    "column_name": "scientific_name",
+    "storage_type": "string",
+    "required": false,
+    "description": "Scientific species name after whitespace normalization."
+  },
+  {
+    "column_name": "common_name",
+    "storage_type": "string",
+    "required": false,
+    "description": "Common species name after whitespace normalization."
+  },
+  {
+    "column_name": "species_display",
+    "storage_type": "string",
+    "required": true,
+    "description": "Preferred display label, favoring common name then scientific name."
+  },
+  {
+    "column_name": "species_key",
+    "storage_type": "string",
+    "required": true,
+    "description": "Normalized species identifier for filtering and aggregation."
+  },
+  {
+    "column_name": "address",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source address text."
+  },
+  {
+    "column_name": "location_type",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source location type text."
+  },
+  {
+    "column_name": "location_name",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source location name text."
+  },
+  {
+    "column_name": "zipcode",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source postal code text."
+  },
+  {
+    "column_name": "neighborhood",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source neighborhood text."
+  },
+  {
+    "column_name": "ward",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source ward text."
+  },
+  {
+    "column_name": "district",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source district text."
+  },
+  {
+    "column_name": "native_status",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source native classification."
+  },
+  {
+    "column_name": "condition",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source condition text."
+  },
+  {
+    "column_name": "overhead_utility",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source overhead utility text."
+  },
+  {
+    "column_name": "dbh_cm",
+    "storage_type": "float64",
+    "required": false,
+    "description": "Diameter at breast height in centimeters."
+  },
+  {
+    "column_name": "dbh_bin",
+    "storage_type": "string",
+    "required": false,
+    "description": "Binned DBH category from the source."
+  },
+  {
+    "column_name": "height_m",
+    "storage_type": "float64",
+    "required": false,
+    "description": "Tree height in meters."
+  },
+  {
+    "column_name": "height_bin",
+    "storage_type": "string",
+    "required": false,
+    "description": "Binned height category from the source."
+  },
+  {
+    "column_name": "planted_date",
+    "storage_type": "date32",
+    "required": false,
+    "description": "Parsed planting date."
+  },
+  {
+    "column_name": "observed_date",
+    "storage_type": "date32",
+    "required": false,
+    "description": "Parsed most recent observation date."
+  },
+  {
+    "column_name": "observation_type",
+    "storage_type": "string",
+    "required": false,
+    "description": "Source observation type."
+  },
+  {
+    "column_name": "retired_date",
+    "storage_type": "date32",
+    "required": false,
+    "description": "Parsed retirement date."
+  },
+  {
+    "column_name": "percent_population",
+    "storage_type": "float64",
+    "required": false,
+    "description": "Source percent population value parsed as numeric."
+  },
+  {
+    "column_name": "has_valid_coordinates",
+    "storage_type": "bool",
+    "required": true,
+    "description": "TRUE when longitude and latitude are present and within valid bounds."
+  }
+]
