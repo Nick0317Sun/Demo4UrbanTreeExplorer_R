@@ -139,11 +139,21 @@ update_selected_city_map <- function(city_key, species = "", zoom_value = NULL, 
   city_ring_visibility <- if (has_locked_city) "visible" else "none"
   point_visibility <- if (!is.null(context$active_city) && !is.null(zoom_value) && zoom_value >= zoom_rules$point_min) "visible" else "none"
   aggregate_resolution <- aggregate_resolution_for_zoom(zoom_value)
-  aggregate_sf <- aggregate_points_for_cities_sf(
-    context$intersecting_keys,
-    species = species,
-    resolution_name = aggregate_resolution
-  )
+  aggregate_sf <- if (aggregate_visibility == "visible") {
+    aggregate_points_for_cities_sf(
+      context$intersecting_keys,
+      species = species,
+      resolution_name = aggregate_resolution
+    )
+  } else {
+    empty_point_sf(list(
+      city_key = character(),
+      city = character(),
+      count_trees = numeric(),
+      count_species = numeric(),
+      dominant_species = character()
+    ))
+  }
   point_sf <- if (point_visibility == "visible") {
     tree_points_sf(context$active_city, species = species, bbox = bbox, zoom_value = zoom_value)
   } else {
@@ -178,7 +188,7 @@ focus_map_for_city_selection <- function(city_key) {
   } else {
     proxy |>
       mapgl::fly_to(
-        center = c(city_row$lon_center[[1]], city_row$lat_center[[1]]),
+        center = c(city_row$view_lon[[1]], city_row$view_lat[[1]]),
         zoom = city_row$default_zoom[[1]]
       )
   }

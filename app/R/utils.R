@@ -11,7 +11,19 @@ app_theme <- function() {
 }
 
 project_root <- function() {
-  normalizePath(file.path(getwd(), ".."), winslash = "/", mustWork = TRUE)
+  candidates <- c(
+    normalizePath(getwd(), winslash = "/", mustWork = FALSE),
+    normalizePath(file.path(getwd(), ".."), winslash = "/", mustWork = FALSE),
+    normalizePath(file.path(getwd(), "..", ".."), winslash = "/", mustWork = FALSE)
+  )
+
+  for (candidate in unique(candidates[file.exists(candidates)])) {
+    if (dir.exists(file.path(candidate, "app")) && dir.exists(file.path(candidate, "data_processed"))) {
+      return(candidate)
+    }
+  }
+
+  stop("Unable to locate the project root from the current working directory.")
 }
 
 processed_root <- function() {
@@ -93,6 +105,75 @@ point_bbox_padding <- function(zoom_value) {
   } else {
     0.0035
   }
+}
+
+rounded_bbox_key <- function(bbox, zoom_value = NULL) {
+  if (is.null(bbox)) {
+    return("no_bbox")
+  }
+
+  digits <- if (is.null(zoom_value) || is.na(zoom_value)) {
+    3L
+  } else if (zoom_value >= 13.5) {
+    4L
+  } else if (zoom_value >= 11) {
+    3L
+  } else {
+    2L
+  }
+
+  paste(
+    round(bbox$xmin, digits),
+    round(bbox$ymin, digits),
+    round(bbox$xmax, digits),
+    round(bbox$ymax, digits),
+    sep = ":"
+  )
+}
+
+rounded_center_key <- function(center, zoom_value = NULL) {
+  if (is.null(center) || is.null(center$lng) || is.null(center$lat)) {
+    return("no_center")
+  }
+
+  digits <- if (is.null(zoom_value) || is.na(zoom_value)) {
+    3L
+  } else if (zoom_value >= 13.5) {
+    4L
+  } else {
+    3L
+  }
+
+  paste(round(center$lng, digits), round(center$lat, digits), sep = ":")
+}
+
+zoom_bucket <- function(zoom_value) {
+  rules <- map_zoom_rules()
+  zoom_value <- zoom_value %||% national_view()$zoom
+
+  if (zoom_value >= rules$point_min) {
+    "points"
+  } else if (zoom_value >= rules$aggregate_fine) {
+    "aggregate_fine"
+  } else if (zoom_value >= rules$aggregate_medium) {
+    "aggregate_medium"
+  } else if (zoom_value >= rules$aggregate_min) {
+    "aggregate_coarse"
+  } else {
+    "national"
+  }
+}
+
+map_content_signature <- function(selected_city, species, zoom_value, bbox = NULL, center = NULL) {
+  bucket <- zoom_bucket(zoom_value)
+  paste(
+    selected_city %||% "",
+    species %||% "",
+    bucket,
+    if (identical(bucket, "national")) "national_bbox" else rounded_bbox_key(bbox, zoom_value),
+    if (identical(bucket, "national")) "national_center" else rounded_center_key(center, zoom_value),
+    sep = "|"
+  )
 }
 
 basemap_options <- function() {

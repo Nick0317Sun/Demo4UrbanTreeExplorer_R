@@ -15,17 +15,9 @@ for (i in seq_along(tree_files)) {
   tree_file <- tree_files[[i]]
   tree_tbl <- read_tree_parquet(tree_file)
   valid_tbl <- tree_tbl %>% filter(has_valid_coordinates)
-
-  bbox <- if (nrow(valid_tbl) > 0) {
-    list(
-      xmin = min(valid_tbl$longitude),
-      xmax = max(valid_tbl$longitude),
-      ymin = min(valid_tbl$latitude),
-      ymax = max(valid_tbl$latitude)
-    )
-  } else {
-    list(xmin = NA_real_, xmax = NA_real_, ymin = NA_real_, ymax = NA_real_)
-  }
+  visual_summary <- compute_city_visual_summary(valid_tbl)
+  bbox <- visual_summary$bbox
+  trimmed <- visual_summary$trimmed_bbox
 
   top_species <- compute_top_species(tree_tbl, top_n = 10)
   top_species_rows[[i]] <- top_species %>%
@@ -48,12 +40,20 @@ for (i in seq_along(tree_files)) {
     n_invalid_coordinates = sum(!tree_tbl$has_valid_coordinates),
     n_species = dplyr::n_distinct(tree_tbl$species_key[!is.na(tree_tbl$species_key) & tree_tbl$species_key != "unknown_species"]),
     missing_species_count = sum(is.na(tree_tbl$scientific_name) & is.na(tree_tbl$common_name)),
-    lon_center = if (nrow(valid_tbl) > 0) (bbox$xmin + bbox$xmax) / 2 else NA_real_,
-    lat_center = if (nrow(valid_tbl) > 0) (bbox$ymin + bbox$ymax) / 2 else NA_real_,
+    marker_lon = visual_summary$marker_lon,
+    marker_lat = visual_summary$marker_lat,
+    view_lon = visual_summary$view_lon,
+    view_lat = visual_summary$view_lat,
+    lon_center = visual_summary$view_lon,
+    lat_center = visual_summary$view_lat,
     xmin = bbox$xmin,
     ymin = bbox$ymin,
     xmax = bbox$xmax,
     ymax = bbox$ymax,
+    trimmed_xmin = trimmed$xmin,
+    trimmed_ymin = trimmed$ymin,
+    trimmed_xmax = trimmed$xmax,
+    trimmed_ymax = trimmed$ymax,
     default_zoom = estimate_default_zoom(bbox$xmin, bbox$xmax, bbox$ymin, bbox$ymax),
     top_species_1 = top_species$species_display[[1]] %||% NA_character_,
     top_species_2 = top_species$species_display[[2]] %||% NA_character_,

@@ -1,5 +1,25 @@
 runtime_cache <- new.env(parent = emptyenv())
 
+remember_runtime_cache_key <- function(bucket_name, cache_key, limit = 48L) {
+  key_list <- runtime_cache[[bucket_name]] %||% character()
+  if (cache_key %in% key_list) {
+    key_list <- c(setdiff(key_list, cache_key), cache_key)
+  } else {
+    key_list <- c(key_list, cache_key)
+  }
+
+  while (length(key_list) > limit) {
+    stale_key <- key_list[[1]]
+    key_list <- key_list[-1]
+    if (exists(stale_key, envir = runtime_cache, inherits = FALSE)) {
+      rm(list = stale_key, envir = runtime_cache)
+    }
+  }
+
+  runtime_cache[[bucket_name]] <- key_list
+  invisible(cache_key)
+}
+
 load_city_summary_data <- function() {
   if (!exists("city_summary", envir = runtime_cache, inherits = FALSE)) {
     runtime_cache$city_summary <- arrow::read_parquet(
@@ -97,7 +117,7 @@ city_points_sf <- function() {
     city_summary <- load_city_summary_data()
     runtime_cache$city_points_sf <- sf::st_as_sf(
       city_summary,
-      coords = c("lon_center", "lat_center"),
+      coords = c("marker_lon", "marker_lat"),
       crs = 4326,
       remove = FALSE
     )
@@ -110,8 +130,13 @@ city_extent_data <- function() {
   if (!exists("city_extent_data", envir = runtime_cache, inherits = FALSE)) {
     runtime_cache$city_extent_data <- load_city_summary_data() |>
       dplyr::select(
-        city_key, city, state, lon_center, lat_center,
-        xmin, ymin, xmax, ymax, default_zoom
+        city_key, city, state,
+        marker_lon, marker_lat,
+        view_lon, view_lat,
+        lon_center, lat_center,
+        xmin, ymin, xmax, ymax,
+        trimmed_xmin, trimmed_ymin, trimmed_xmax, trimmed_ymax,
+        default_zoom
       )
   }
 
@@ -130,7 +155,7 @@ selected_city_sf <- function(city_key) {
 
   sf::st_as_sf(
     row,
-    coords = c("lon_center", "lat_center"),
+    coords = c("marker_lon", "marker_lat"),
     crs = 4326,
     remove = FALSE
   )
@@ -183,9 +208,18 @@ aggregate_points_for_cities_sf <- function(city_keys, species = "", resolution_n
   }
 
   city_keys <- head(city_keys, max_cities)
-  aggregate_parts <- lapply(city_keys, function(key) {
-    load_city_aggregate_data(key, resolution_name = resolution_name)
-  })
+  cache_key <- paste(
+    "aggregate_sf",
+    resolution_name,
+    species %||% "",
+    paste(city_keys, collapse = ","),
+    sep = "|"
+  )
+  if (exists(cache_key, envir = runtime_cache, inherits = FALSE)) {
+    return(runtime_cache[[cache_key]])
+  }
+
+  aggregate_parts <- lapply(city_keys, function(key) load_city_aggregate_data(key, resolution_name = resolution_name))
 
   aggregate_data <- dplyr::bind_rows(aggregate_parts)
   if (!is.null(species) && nzchar(species)) {
@@ -202,12 +236,15 @@ aggregate_points_for_cities_sf <- function(city_keys, species = "", resolution_n
     )))
   }
 
-  sf::st_as_sf(
+  aggregate_sf <- sf::st_as_sf(
     aggregate_data,
     coords = c("lon_center", "lat_center"),
     crs = 4326,
     remove = FALSE
   )
+  runtime_cache[[cache_key]] <- aggregate_sf
+  remember_runtime_cache_key("aggregate_sf_cache_keys", cache_key, limit = 64L)
+  aggregate_sf
 }
 
 tree_points_sf <- function(city_key, species = "", bbox = NULL, zoom_value = NULL, max_points = 30000L) {
@@ -217,6 +254,19 @@ tree_points_sf <- function(city_key, species = "", bbox = NULL, zoom_value = NUL
       city = character(),
       species_display = character()
     )))
+  }
+
+  cache_key <- paste(
+    "point_sf",
+    city_key,
+    species %||% "",
+    rounded_bbox_key(bbox, zoom_value),
+    zoom_bucket(zoom_value),
+    as.integer(max_points),
+    sep = "|"
+  )
+  if (exists(cache_key, envir = runtime_cache, inherits = FALSE)) {
+    return(runtime_cache[[cache_key]])
   }
 
   tree_data <- filtered_city_tree_data(city_key, species = species)
@@ -247,12 +297,15 @@ tree_points_sf <- function(city_key, species = "", bbox = NULL, zoom_value = NUL
     tree_data <- tree_data[step_idx, , drop = FALSE]
   }
 
-  sf::st_as_sf(
+  point_sf <- sf::st_as_sf(
     tree_data,
     coords = c("longitude", "latitude"),
     crs = 4326,
     remove = FALSE
   )
+  runtime_cache[[cache_key]] <- point_sf
+  remember_runtime_cache_key("point_sf_cache_keys", cache_key, limit = 48L)
+  point_sf
 }
 
 bbox_overlap_area <- function(city_tbl, bbox) {
@@ -261,7 +314,7 @@ bbox_overlap_area <- function(city_tbl, bbox) {
   x_overlap * y_overlap
 }
 
-intersecting_cities_for_bbox <- function(bbox, max_cities = 3L) {
+intersecting_cities_for_bbox <- function(bbox, max_cities = 2L) {
   if (is.null(bbox)) {
     return(character())
   }
@@ -313,8 +366,18 @@ nearest_city_to_center <- function(center, candidate_keys = NULL) {
     return(NULL)
   }
 
-  distance_sq <- (city_tbl$lon_center - center$lng)^2 + (city_tbl$lat_center - center$lat)^2
+  distance_sq <- (city_tbl$view_lon - center$lng)^2 + (city_tbl$view_lat - center$lat)^2
   city_tbl$city_key[[which.min(distance_sq)]]
+}
+
+bbox_is_city_scale <- function(bbox) {
+  if (is.null(bbox)) {
+    return(FALSE)
+  }
+
+  lon_span <- abs(bbox$xmax - bbox$xmin)
+  lat_span <- abs(bbox$ymax - bbox$ymin)
+  is.finite(lon_span) && is.finite(lat_span) && lon_span <= 5.5 && lat_span <= 5.5
 }
 
 auto_city_context <- function(selected_city, zoom_value, bbox = NULL, center = NULL) {
@@ -323,8 +386,8 @@ auto_city_context <- function(selected_city, zoom_value, bbox = NULL, center = N
   if (!is.null(selected_city) && nzchar(selected_city)) {
     intersecting_keys <- selected_city
     active_city <- selected_city
-  } else if (!is.null(zoom_value) && zoom_value >= rules$aggregate_min) {
-    intersecting_keys <- intersecting_cities_for_bbox(bbox, max_cities = 3L)
+  } else if (!is.null(zoom_value) && zoom_value >= rules$aggregate_min && bbox_is_city_scale(bbox)) {
+    intersecting_keys <- intersecting_cities_for_bbox(bbox, max_cities = 2L)
     center_matches <- city_contains_center(center)
     active_city <- center_matches[[1]] %||% intersecting_keys[[1]] %||% nearest_city_to_center(center, intersecting_keys)
   } else {

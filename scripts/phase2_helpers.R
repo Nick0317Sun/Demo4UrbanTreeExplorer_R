@@ -334,6 +334,84 @@ estimate_default_zoom <- function(xmin, xmax, ymin, ymax) {
   }
 }
 
+trimmed_bbox <- function(longitude, latitude, lower_prob = 0.02, upper_prob = 0.98) {
+  if (length(longitude) == 0 || length(latitude) == 0) {
+    return(list(
+      xmin = NA_real_, xmax = NA_real_,
+      ymin = NA_real_, ymax = NA_real_
+    ))
+  }
+
+  list(
+    xmin = as.numeric(stats::quantile(longitude, probs = lower_prob, names = FALSE, na.rm = TRUE)),
+    xmax = as.numeric(stats::quantile(longitude, probs = upper_prob, names = FALSE, na.rm = TRUE)),
+    ymin = as.numeric(stats::quantile(latitude, probs = lower_prob, names = FALSE, na.rm = TRUE)),
+    ymax = as.numeric(stats::quantile(latitude, probs = upper_prob, names = FALSE, na.rm = TRUE))
+  )
+}
+
+snap_center_to_occupied_cell <- function(valid_tbl, target_lon, target_lat, cell_size_deg = 0.001) {
+  if (!is.finite(target_lon) || !is.finite(target_lat) || nrow(valid_tbl) == 0) {
+    return(list(lon = target_lon, lat = target_lat))
+  }
+
+  occupied_cells <- valid_tbl %>%
+    mutate(
+      grid_x = floor(longitude / cell_size_deg),
+      grid_y = floor(latitude / cell_size_deg)
+    ) %>%
+    count(grid_x, grid_y, sort = TRUE, name = "n_points") %>%
+    mutate(
+      lon = (grid_x * cell_size_deg) + (cell_size_deg / 2),
+      lat = (grid_y * cell_size_deg) + (cell_size_deg / 2),
+      distance_sq = (lon - target_lon)^2 + (lat - target_lat)^2
+    ) %>%
+    arrange(distance_sq, desc(n_points))
+
+  if (nrow(occupied_cells) == 0) {
+    return(list(lon = target_lon, lat = target_lat))
+  }
+
+  list(
+    lon = occupied_cells$lon[[1]],
+    lat = occupied_cells$lat[[1]]
+  )
+}
+
+compute_city_visual_summary <- function(valid_tbl) {
+  if (nrow(valid_tbl) == 0) {
+    empty_bbox <- list(xmin = NA_real_, xmax = NA_real_, ymin = NA_real_, ymax = NA_real_)
+    return(list(
+      bbox = empty_bbox,
+      trimmed_bbox = empty_bbox,
+      marker_lon = NA_real_,
+      marker_lat = NA_real_,
+      view_lon = NA_real_,
+      view_lat = NA_real_
+    ))
+  }
+
+  bbox <- list(
+    xmin = min(valid_tbl$longitude),
+    xmax = max(valid_tbl$longitude),
+    ymin = min(valid_tbl$latitude),
+    ymax = max(valid_tbl$latitude)
+  )
+  visual_bbox <- trimmed_bbox(valid_tbl$longitude, valid_tbl$latitude)
+  target_lon <- (visual_bbox$xmin + visual_bbox$xmax) / 2
+  target_lat <- (visual_bbox$ymin + visual_bbox$ymax) / 2
+  snapped_center <- snap_center_to_occupied_cell(valid_tbl, target_lon, target_lat)
+
+  list(
+    bbox = bbox,
+    trimmed_bbox = visual_bbox,
+    marker_lon = snapped_center$lon,
+    marker_lat = snapped_center$lat,
+    view_lon = snapped_center$lon,
+    view_lat = snapped_center$lat
+  )
+}
+
 build_single_resolution_aggregate <- function(tbl, resolution_name, cell_size_deg) {
   valid_tbl <- tbl %>%
     filter(has_valid_coordinates)

@@ -1,5 +1,5 @@
 app_server <- function(input, output, session) {
-  city_summary <- load_city_summary_data()
+  load_city_summary_data()
 
   shiny::updateSelectizeInput(
     session = session,
@@ -28,6 +28,19 @@ app_server <- function(input, output, session) {
     input$main_map_center %||% NULL
   })
 
+  debounced_navigation <- shiny::debounce(
+    shiny::reactive({
+      list(
+        zoom = current_zoom(),
+        bbox = current_bbox(),
+        center = current_center()
+      )
+    }),
+    millis = 160
+  )
+
+  last_map_signature <- shiny::reactiveVal(NULL)
+
   shiny::observeEvent(selected_city(), {
     shiny::updateSelectizeInput(
       session = session,
@@ -51,14 +64,28 @@ app_server <- function(input, output, session) {
   }, ignoreInit = TRUE)
 
   shiny::observeEvent(
-    list(selected_city(), selected_species(), current_zoom(), current_bbox(), current_center()),
+    list(selected_city(), selected_species(), debounced_navigation()),
     {
+      navigation <- debounced_navigation()
+      signature <- map_content_signature(
+        selected_city = selected_city(),
+        species = selected_species(),
+        zoom_value = navigation$zoom,
+        bbox = navigation$bbox,
+        center = navigation$center
+      )
+
+      if (identical(signature, last_map_signature())) {
+        return(invisible(NULL))
+      }
+      last_map_signature(signature)
+
       update_selected_city_map(
         selected_city(),
         species = selected_species(),
-        zoom_value = current_zoom(),
-        bbox = current_bbox(),
-        center = current_center()
+        zoom_value = navigation$zoom,
+        bbox = navigation$bbox,
+        center = navigation$center
       )
     },
     ignoreInit = FALSE
