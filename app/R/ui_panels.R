@@ -73,36 +73,7 @@ build_app_ui <- function() {
           )
         )
       ),
-      shiny::div(
-        class = "floating-panel bottom-right-panel",
-        shiny::div(
-          class = "panel-header",
-          shiny::div(
-            shiny::tags$span(class = "panel-kicker", "Placeholder"),
-            shiny::h2("Data Assistant")
-          ),
-          shiny::tags$button(
-            class = "panel-toggle",
-            type = "button",
-            `data-target` = "bottom-right-panel",
-            `aria-expanded` = "true",
-            "Collapse"
-          )
-        ),
-        shiny::div(
-          class = "panel-body",
-          shiny::p(
-            class = "assistant-copy",
-            "Coming later. Phase 3 keeps the assistant panel visible but non-functional."
-          ),
-          shiny::tags$input(
-            class = "assistant-input",
-            type = "text",
-            placeholder = "Assistant input will be enabled in a later phase",
-            disabled = "disabled"
-          )
-        )
-      )
+      assistant_panel_ui()
     )
   )
 }
