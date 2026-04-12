@@ -64,18 +64,18 @@ default_map_widget <- function(style_url) {
     mapgl::add_circle_layer(
       id = "selected-aggregate-glow",
       source = aggregate_source,
-      circle_color = "#6cab71",
+      circle_color = "#5eaa63",
       circle_opacity = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 12.7, 13.4),
-        values = c(0.16, 0.12, 0.08, 0.04, 0.0)
+        values = c(0.26, 0.2, 0.13, 0.06, 0.0)
       ),
       circle_blur = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 13.0),
-        values = c(0.9, 0.7, 0.48, 0.28)
+        values = c(0.92, 0.72, 0.5, 0.28)
       ),
       circle_radius = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 13.0),
-        values = c(18, 13, 8, 5)
+        values = c(20, 14, 8.5, 5)
       ),
       min_zoom = zoom_rules$aggregate_min,
       visibility = "none"
@@ -83,18 +83,18 @@ default_map_widget <- function(style_url) {
     mapgl::add_circle_layer(
       id = "selected-aggregate-circles",
       source = aggregate_source,
-      circle_color = "#3a7f4d",
+      circle_color = "#2f7a42",
       circle_opacity = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 12.7, 13.4),
-        values = c(0.22, 0.18, 0.12, 0.06, 0.0)
+        values = c(0.36, 0.29, 0.19, 0.09, 0.0)
       ),
       circle_blur = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 13.0),
-        values = c(0.4, 0.28, 0.16, 0.08)
+        values = c(0.48, 0.32, 0.18, 0.08)
       ),
       circle_radius = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 13.0),
-        values = c(9, 7, 4.8, 3.3)
+        values = c(10.5, 7.8, 5.2, 3.4)
       ),
       min_zoom = zoom_rules$aggregate_min,
       visibility = "none"
@@ -110,36 +110,42 @@ default_map_widget <- function(style_url) {
     mapgl::add_circle_layer(
       id = "selected-tree-points",
       source = point_source,
-      circle_color = "#1f6b42",
+      circle_color = "#176338",
       circle_opacity = zoom_interpolate_expr(
         stops = c(12.5, 12.8, 13.4, 15.0),
-        values = c(0.0, 0.24, 0.55, 0.82)
+        values = c(0.0, 0.34, 0.68, 0.9)
       ),
       circle_radius = zoom_interpolate_expr(
         stops = c(12.7, 13.4, 15.0),
-        values = c(1.2, 1.7, 2.4)
+        values = c(1.3, 1.9, 2.7)
       ),
-      circle_stroke_color = "#eaf4e9",
+      circle_stroke_color = "#f4faf2",
       circle_stroke_width = zoom_interpolate_expr(
         stops = c(12.7, 14.0, 15.0),
-        values = c(0.2, 0.35, 0.5)
+        values = c(0.28, 0.45, 0.62)
       ),
       min_zoom = zoom_rules$point_min,
       visibility = "none"
     )
 }
 
-update_selected_city_map <- function(city_key, species = "", zoom_value = NULL, bbox = NULL) {
+update_selected_city_map <- function(city_key, species = "", zoom_value = NULL, bbox = NULL, center = NULL) {
   proxy <- mapgl::maplibre_proxy("main_map")
-  has_city <- !is.null(city_key) && nzchar(city_key)
   zoom_rules <- map_zoom_rules()
-  aggregate_visibility <- if (has_city) "visible" else "none"
-  city_ring_visibility <- if (has_city) "visible" else "none"
-  point_visibility <- if (has_city && !is.null(zoom_value) && zoom_value >= zoom_rules$point_min) "visible" else "none"
+  context <- auto_city_context(city_key, zoom_value = zoom_value, bbox = bbox, center = center)
+  has_context <- length(context$intersecting_keys) > 0
+  has_locked_city <- !is.null(city_key) && nzchar(city_key)
+  aggregate_visibility <- if (has_context && !is.null(zoom_value) && zoom_value >= zoom_rules$aggregate_min) "visible" else "none"
+  city_ring_visibility <- if (has_locked_city) "visible" else "none"
+  point_visibility <- if (!is.null(context$active_city) && !is.null(zoom_value) && zoom_value >= zoom_rules$point_min) "visible" else "none"
   aggregate_resolution <- aggregate_resolution_for_zoom(zoom_value)
-  aggregate_sf <- aggregate_points_sf(city_key, species = species, resolution_name = aggregate_resolution)
+  aggregate_sf <- aggregate_points_for_cities_sf(
+    context$intersecting_keys,
+    species = species,
+    resolution_name = aggregate_resolution
+  )
   point_sf <- if (point_visibility == "visible") {
-    tree_points_sf(city_key, species = species, bbox = bbox, zoom_value = zoom_value)
+    tree_points_sf(context$active_city, species = species, bbox = bbox, zoom_value = zoom_value)
   } else {
     empty_point_sf(list(
       city_key = character(),

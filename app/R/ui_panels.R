@@ -17,7 +17,7 @@ build_app_ui <- function() {
         mapgl::maplibreOutput("main_map", width = "100%", height = "100vh")
       ),
       shiny::div(
-        class = "floating-panel top-right-panel",
+        class = "floating-panel top-left-panel",
         shiny::div(
           class = "panel-header",
           shiny::div(
@@ -27,13 +27,13 @@ build_app_ui <- function() {
           shiny::tags$button(
             class = "panel-toggle",
             type = "button",
-            `data-target` = "top-right-panel",
+            `data-target` = "top-left-panel",
             `aria-expanded` = "true",
             "Collapse"
           )
         ),
         shiny::div(
-          class = "panel-body",
+          class = "panel-body panel-scroll-body",
           shiny::div(
             class = "control-block",
             shiny::tags$label(class = "control-label", `for` = "basemap", "Basemap"),

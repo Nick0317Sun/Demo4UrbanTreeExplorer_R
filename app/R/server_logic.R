@@ -24,6 +24,10 @@ app_server <- function(input, output, session) {
     input$main_map_bbox %||% NULL
   })
 
+  current_center <- shiny::reactive({
+    input$main_map_center %||% NULL
+  })
+
   shiny::observeEvent(selected_city(), {
     shiny::updateSelectizeInput(
       session = session,
@@ -47,13 +51,14 @@ app_server <- function(input, output, session) {
   }, ignoreInit = TRUE)
 
   shiny::observeEvent(
-    list(selected_city(), selected_species(), current_zoom(), current_bbox()),
+    list(selected_city(), selected_species(), current_zoom(), current_bbox(), current_center()),
     {
       update_selected_city_map(
         selected_city(),
         species = selected_species(),
         zoom_value = current_zoom(),
-        bbox = current_bbox()
+        bbox = current_bbox(),
+        center = current_center()
       )
     },
     ignoreInit = FALSE

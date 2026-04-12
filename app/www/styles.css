@@ -42,9 +42,10 @@ body {
   overflow: hidden;
 }
 
-.top-right-panel {
+.top-left-panel {
   top: 14px;
-  right: 14px;
+  left: 14px;
+  max-height: min(78vh, 760px);
 }
 
 .bottom-right-panel {
@@ -80,6 +81,11 @@ body {
 
 .panel-body {
   padding: 14px 16px 16px;
+}
+
+.panel-scroll-body {
+  overflow-y: auto;
+  max-height: calc(min(78vh, 760px) - 72px);
 }
 
 .panel-toggle {
@@ -161,6 +167,7 @@ body {
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px solid rgba(64, 94, 70, 0.08);
+  padding-bottom: 4px;
 }
 
 .assistant-copy {
@@ -201,13 +208,18 @@ body {
     width: calc(100vw - 20px);
   }
 
-  .top-right-panel {
+  .top-left-panel {
     top: 10px;
-    right: 10px;
+    left: 10px;
+    max-height: min(62vh, 640px);
   }
 
   .bottom-right-panel {
     right: 10px;
     bottom: 10px;
+  }
+
+  .panel-scroll-body {
+    max-height: calc(min(62vh, 640px) - 72px);
   }
 }
