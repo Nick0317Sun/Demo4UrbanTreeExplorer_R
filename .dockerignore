@@ -1,0 +1,17 @@
+.git
+.gitignore
+.gitattributes
+.devcontainer
+.Renviron
+__pycache__
+*.Rproj
+*.Rhistory
+*.RData
+*.Ruserdata
+*.log
+.DS_Store
+
+city_tree_filtered_with_coords_species
+docs/inspection
+scripts
+
