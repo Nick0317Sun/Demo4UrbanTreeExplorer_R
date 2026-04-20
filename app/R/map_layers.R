@@ -64,10 +64,10 @@ default_map_widget <- function(style_url) {
     mapgl::add_circle_layer(
       id = "selected-aggregate-glow",
       source = aggregate_source,
-      circle_color = "#5eaa63",
+      circle_color = "#b8ff45",
       circle_opacity = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 12.7, 13.4),
-        values = c(0.26, 0.2, 0.13, 0.06, 0.0)
+        values = c(0.38, 0.32, 0.24, 0.12, 0.0)
       ),
       circle_blur = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 13.0),
@@ -83,10 +83,10 @@ default_map_widget <- function(style_url) {
     mapgl::add_circle_layer(
       id = "selected-aggregate-circles",
       source = aggregate_source,
-      circle_color = "#2f7a42",
+      circle_color = "#9cff00",
       circle_opacity = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 12.7, 13.4),
-        values = c(0.36, 0.29, 0.19, 0.09, 0.0)
+        values = c(0.58, 0.48, 0.36, 0.18, 0.0)
       ),
       circle_blur = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 13.0),
@@ -95,6 +95,15 @@ default_map_widget <- function(style_url) {
       circle_radius = zoom_interpolate_expr(
         stops = c(8.6, 10.2, 12.0, 13.0),
         values = c(10.5, 7.8, 5.2, 3.4)
+      ),
+      circle_stroke_color = "#c9ff65",
+      circle_stroke_opacity = zoom_interpolate_expr(
+        stops = c(8.6, 10.2, 12.0, 12.7, 13.4),
+        values = c(0.26, 0.22, 0.18, 0.1, 0.0)
+      ),
+      circle_stroke_width = zoom_interpolate_expr(
+        stops = c(8.6, 10.2, 12.0, 13.0),
+        values = c(0.55, 0.45, 0.32, 0.18)
       ),
       min_zoom = zoom_rules$aggregate_min,
       visibility = "none"
@@ -110,7 +119,7 @@ default_map_widget <- function(style_url) {
     mapgl::add_circle_layer(
       id = "selected-tree-points",
       source = point_source,
-      circle_color = "#176338",
+      circle_color = "#9cff00",
       circle_opacity = zoom_interpolate_expr(
         stops = c(12.5, 12.8, 13.4, 15.0),
         values = c(0.0, 0.34, 0.68, 0.9)
@@ -119,10 +128,10 @@ default_map_widget <- function(style_url) {
         stops = c(12.7, 13.4, 15.0),
         values = c(1.3, 1.9, 2.7)
       ),
-      circle_stroke_color = "#f4faf2",
+      circle_stroke_color = "#c9ff65",
       circle_stroke_width = zoom_interpolate_expr(
         stops = c(12.7, 14.0, 15.0),
-        values = c(0.28, 0.45, 0.62)
+        values = c(0.35, 0.55, 0.72)
       ),
       min_zoom = zoom_rules$point_min,
       visibility = "none"

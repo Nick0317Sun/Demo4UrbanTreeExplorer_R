@@ -179,8 +179,7 @@ map_content_signature <- function(selected_city, species, zoom_value, bbox = NUL
 basemap_options <- function() {
   c(
     "Light / Plain" = mapgl::carto_style("positron"),
-    "Minimal Gray" = mapgl::openfreemap_style("positron"),
-    "Detailed Streets" = mapgl::carto_style("voyager")
+    "Satellite Imagery" = "esri-world-imagery-style.json"
   )
 }
 

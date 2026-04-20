@@ -4,7 +4,7 @@ app_server <- function(input, output, session) {
     text <- if (isTRUE(switched) && nzchar(model_name %||% "")) {
       paste0("Assistant reset on model switch. Current model: ", model_name, ".")
     } else {
-      "Ask about national totals, a city, a species, or tell me to fly to a city."
+      "Ask about national totals, a city, a species, map actions, or a general question."
     }
 
     list(list(role = "assistant", text = text))
@@ -101,7 +101,7 @@ app_server <- function(input, output, session) {
       placeholder = if (disabled && !assistant_busy()) {
         "Assistant is unavailable."
       } else {
-        "Ask about the current city, species, viewport, or tell the map what to do."
+        "Ask about urban tree data, control the map, or ask a general question."
       },
       button_label = if (assistant_busy()) "Working..." else "Send"
     ))

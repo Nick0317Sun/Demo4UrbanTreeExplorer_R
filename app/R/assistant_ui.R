@@ -32,7 +32,7 @@ assistant_panel_ui <- function() {
           width = "100%",
           rows = 3,
           resize = "none",
-          placeholder = "Ask about the current city, species, viewport, or tell the map what to do."
+          placeholder = "Ask about urban tree data, control the map, or ask a general question."
         ),
         shiny::div(
           class = "assistant-send-row",
